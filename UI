@@ -7,7 +7,7 @@ secondApplet s;
 void setup() 
 {  
   frame.setTitle("WEBCAM");
-  size(W, H);
+  size(1280, 720);
   PFrame f = new PFrame();
   cam = new Capture(this, width, height);
   cam.start();            
