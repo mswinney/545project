@@ -21,10 +21,6 @@ void draw() //webcam window
     cam.read();
   }
   image(cam, 0, 0);
-  //set(0, 0, cam);
-  
-  text("x: " + mouseX, 100, 30);
-  text("y: " + mouseY, 200 , 30);
 }
 
 void mousePressed() 
@@ -53,8 +49,6 @@ public class secondApplet extends PApplet
   public void draw() 
   {
     background(255,0,0);
-    text("x: " + mouseX, 100, 30);
-    text("y: " + mouseY, 200, 30);
     
     rectMode(CENTER);
     textAlign(CENTER, CENTER);
