@@ -44,7 +44,7 @@ void draw() //webcam window
       println("Tarah");
     } 
     
-   if (mouseX > 40 && mouseX < 340 && mouseY > 366 && mouseY < 415) 
+   if (s.mouseX > 40 && s.mouseX < 340 && s.mouseY > 366 && s.mouseY < 415) 
     {
 
     }
