@@ -3,7 +3,10 @@ import java.awt.Frame;
 Capture cam;
 PFrame f;
 secondApplet s;
+float bright_up = 1;
+PImage bright;
 
+/**********************WEBCAM WINDOW**********************/
 void setup() 
 {  
   frame.setTitle("WEBCAM");
@@ -13,14 +16,14 @@ void setup()
   cam.start();            
 }
 
-void draw() //webcam window
+void draw()
 { 
-  background(0,0,255);
+  background(0, 0, 255);
   if (cam.available())
-  {
     cam.read();
-  }
-  image(cam, 0, 0);
+ 
+  bright = brightness_change(cam);
+  image(bright, 0, 0);  
   
  if(s.mousePressed)
  { 
@@ -46,16 +49,38 @@ void draw() //webcam window
     
    if (s.mouseX > 40 && s.mouseX < 340 && s.mouseY > 366 && s.mouseY < 415) 
     {
-
+      bright_up += 0.5;      
     }
  }
+}
+
+PImage brightness_change(Capture vid)
+{
+  vid.loadPixels();
+  PImage target = createImage(vid.width, vid.height, RGB);
+  for(int i=0; i<vid.pixels.length; i++)
+  {
+    color c = vid.pixels[i];
+    float r = red(c)*bright_up;
+    float g = green(c)*bright_up;
+    float b = blue(c)*bright_up;
+    if(r>255)
+      r = 255;
+    if(g>255)
+      g = 255;
+    if(b>255)
+      b = 255;
+    target.pixels[i] = color(r,g,b);
+  }
+  return target;
 }
 
 void mousePressed()
 {
 }
 
-public class PFrame extends Frame //control panel window
+/**********************CONTROL PANEL WINDOW**********************/
+public class PFrame extends Frame
 {
     public PFrame()
     {
@@ -67,9 +92,11 @@ public class PFrame extends Frame //control panel window
       show();
     }
 }
+
 public class secondApplet extends PApplet
 {
   String[] members = {"Matthew", "Kyle", "Brittany", "Tarah", "Geo"};
+  
   public void setup()
   {    
   }
@@ -96,5 +123,3 @@ public class secondApplet extends PApplet
   }
   
 }
-
-
