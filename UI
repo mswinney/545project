@@ -1,0 +1,103 @@
+import processing.video.*;
+import java.awt.Frame;
+Capture cam;
+PFrame f;
+secondApplet s;
+
+void setup() 
+{  
+  frame.setTitle("WEBCAM");
+  size(1280, 720);
+  PFrame f = new PFrame();
+  cam = new Capture(this, width, height);
+  cam.start();            
+}
+
+void draw() //webcam window
+{ 
+  background(0,0,255);
+  if (cam.available())
+  {
+    cam.read();
+  }
+  image(cam, 0, 0);
+  //set(0, 0, cam);
+  
+  text("x: " + mouseX, 100, 30);
+  text("y: " + mouseY, 200 , 30);
+}
+
+void mousePressed() 
+{
+}
+
+public class PFrame extends Frame //control panel window
+{
+    public PFrame()
+    {
+      setTitle("CONTROL PANEL");
+      setBounds(30, 30, 400, 500);
+      s = new secondApplet();
+      add(s);
+      s.init();
+      show();
+    }
+}
+public class secondApplet extends PApplet
+{
+  String[] members = {"Matthew", "Kyle", "Brittany", "Tarah", "Geo"};
+  public void setup()
+  {    
+  }
+
+  public void draw() 
+  {
+    background(255,0,0);
+    text("x: " + mouseX, 100, 30);
+    text("y: " + mouseY, 200, 30);
+    
+    rectMode(CENTER);
+    textAlign(CENTER, CENTER);
+    textSize(16);
+    int btnY = 78;
+    for(int i=0; i<5; i++)
+    {
+      fill(255);
+      rect(width/2, btnY, 300, 50);
+      fill(0);
+      text(members[i], width/2, btnY); 
+      btnY += 78;
+    }
+  }
+  
+  void mousePressed() 
+  {
+    
+    if (mouseX > 40 && mouseX < 340 && mouseY > 54 && mouseY < 102) 
+    {
+      println("Matthew");
+    }
+   
+   if (mouseX > 40 && mouseX < 340 && mouseY > 132 && mouseY < 180) 
+    {
+      println("Kyle");
+    }
+   
+   if (mouseX > 40 && mouseX < 340 && mouseY > 210 && mouseY < 258) 
+    {
+      println("Brittany");
+    }
+   
+   if (mouseX > 40 && mouseX < 340 && mouseY > 287 && mouseY < 337) 
+    {
+      println("Tarah");
+    } 
+   
+   if (mouseX > 40 && mouseX < 340 && mouseY > 366 && mouseY < 415) 
+    {
+      
+    } 
+  }
+}
+
+
