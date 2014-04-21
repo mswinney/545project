@@ -7,7 +7,7 @@ secondApplet s;
 void setup() 
 {  
   frame.setTitle("WEBCAM");
-  size(1280, 720);
+  size(W, H);
   PFrame f = new PFrame();
   cam = new Capture(this, width, height);
   cam.start();            
@@ -21,9 +21,37 @@ void draw() //webcam window
     cam.read();
   }
   image(cam, 0, 0);
+  
+ if(s.mousePressed)
+ { 
+   if (s.mouseX > 40 && s.mouseX < 340 && s.mouseY > 54 && s.mouseY < 102) 
+    {
+      println("Matthew");
+    }
+   
+   if (s.mouseX > 40 && s.mouseX < 340 && s.mouseY > 132 && s.mouseY < 180) 
+    {
+      println("Kyle");
+    }
+   
+   if (s.mouseX > 40 && s.mouseX < 340 && s.mouseY > 210 && s.mouseY < 258) 
+    {
+      println("Brittany");
+    }
+   
+   if (s.mouseX > 40 && s.mouseX < 340 && s.mouseY > 287 && s.mouseY < 337) 
+    {
+      println("Tarah");
+    } 
+    
+   if (mouseX > 40 && mouseX < 340 && mouseY > 366 && mouseY < 415) 
+    {
+
+    }
+ }
 }
 
-void mousePressed() 
+void mousePressed()
 {
 }
 
@@ -63,34 +91,10 @@ public class secondApplet extends PApplet
     }
   }
   
-  void mousePressed() 
+  void mousePressed()
   {
-    
-    if (mouseX > 40 && mouseX < 340 && mouseY > 54 && mouseY < 102) 
-    {
-      println("Matthew");
-    }
-   
-   if (mouseX > 40 && mouseX < 340 && mouseY > 132 && mouseY < 180) 
-    {
-      println("Kyle");
-    }
-   
-   if (mouseX > 40 && mouseX < 340 && mouseY > 210 && mouseY < 258) 
-    {
-      println("Brittany");
-    }
-   
-   if (mouseX > 40 && mouseX < 340 && mouseY > 287 && mouseY < 337) 
-    {
-      println("Tarah");
-    } 
-   
-   if (mouseX > 40 && mouseX < 340 && mouseY > 366 && mouseY < 415) 
-    {
-      
-    } 
   }
+  
 }
 
 
