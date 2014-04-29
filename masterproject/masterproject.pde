@@ -7,6 +7,7 @@ secondApplet s;
 static final float STARTING_BRIGHTNESS = 1;
 float bright_up = STARTING_BRIGHTNESS;
 static final float COLOR_MATCH_THRESHOLD = 65;
+static final int STEP_SIZE = 8;
 PImage manipulatedFrame;
 color targetColor;
 ArrayList<Shape> shapes = new ArrayList<Shape>();
@@ -135,9 +136,9 @@ PImage brightness_change(Capture vid)
 }
 
 void grassFire(PImage img) {
-  for (int y = 0; y < img.height; y++)
+  for (int y = 0; y < img.height; y += STEP_SIZE)
   {
-    for (int x = 0; x < img.width; x++)
+    for (int x = 0; x < img.width; x += STEP_SIZE)
     {
       if (img.get(x, y) == color(0)) {
         color SC = color(0);
