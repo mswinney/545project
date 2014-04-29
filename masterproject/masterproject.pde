@@ -1,5 +1,6 @@
 import processing.video.*;
 import java.awt.Frame;
+import java.util.Collections;
 Capture cam;
 PFrame f;
 secondApplet s;
@@ -215,6 +216,8 @@ void label(PImage img, int x, int y, color p, int shapeNum) {
 
 void keyPressed() {
   if (key == ' ') {
+    Collections.sort(shapes);
+    shapes.get(0).shapeColor = color(255, 0, 0);
     println(shapes);
   }
 }
@@ -265,7 +268,7 @@ public class secondApplet extends PApplet
   }
 }
 
-class Shape {
+class Shape implements Comparable<Shape> {
   int minX;
   int maxX;
   int minY;
@@ -289,6 +292,16 @@ class Shape {
     s.append(minY + "-" + maxY + ", #");
     s.append(hex(shapeColor).substring(2) + "]");
     return s.toString();
+  }
+  
+  public Integer getSize() {
+    return (maxX-minX) * (maxY-minY);
+  }
+  
+  public int compareTo(Shape other) {
+    // This is intentionally reversed to make the largest shape
+    // sort to the front of the list.
+    return other.getSize().compareTo(this.getSize());
   }
 }
 
