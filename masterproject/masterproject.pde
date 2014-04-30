@@ -11,6 +11,8 @@ static final int STEP_SIZE = 8;
 PImage manipulatedFrame;
 color targetColor;
 ArrayList<Shape> shapes = new ArrayList<Shape>();
+int frameCounter = 0;
+static final int FRAMES_PER_UPDATE = 1024;
 
 /**********************WEBCAM WINDOW**********************/
 void setup() 
@@ -39,6 +41,17 @@ void draw()
   }
   manipulatedFrame = trackObject(manipulatedFrame, targetColor);
   image(manipulatedFrame, 0, 0);
+  
+  frameCounter++;
+  if (frameCounter < FRAMES_PER_UPDATE && shapes.size() > 0) {
+    Collections.sort(shapes);
+    Shape biggestShape = shapes.get(0);
+    biggestShape.shapeColor = color(255, 0, 0);
+    int x = (biggestShape.minX + biggestShape.maxX)/2;
+    int y = (biggestShape.minY + biggestShape.maxY)/2;
+    stroke(0, 0, 255);
+    rect(x-2, y-2, 3, 3);
+  }
 
   if (s.mousePressed)
   { 
