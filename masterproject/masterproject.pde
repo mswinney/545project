@@ -27,8 +27,12 @@ int PIKA_IDLE_TOLERANCE = 3 * PIKA_STEP_SIZE;
 void setup() 
 {  
   frame.setTitle("WEBCAM");
-  size(1280, 720);
+  size(640, 480);
   PFrame f = new PFrame();
+  String[] cameras = Capture.list();
+  for (String s : cameras) {
+    println(s);
+  }
   cam = new Capture(this, width, height);
   cam.start();            
   //targetColor = color(0, 255, 63);
