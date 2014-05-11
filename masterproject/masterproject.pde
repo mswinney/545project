@@ -11,8 +11,17 @@ static final int STEP_SIZE = 8;
 PImage manipulatedFrame;
 color targetColor;
 ArrayList<Shape> shapes = new ArrayList<Shape>();
-int frameCounter = 0;
-static final int FRAMES_PER_UPDATE = 1024;
+ViewState viewState = ViewState.RAW_CAPTURE;
+PImage[] pikarunL;
+PImage[] pikarunR;
+PImage[] pikaidle;
+int pikaX, pikaY, pikaframe = 0;
+PikaState pikaState = PikaState.IDLE;
+// how many pixels pikachu moves each step
+int PIKA_STEP_SIZE = 8;
+// how far pikachu can be from the center of the object
+// and still go into idle anim (should be at least one step)
+int PIKA_IDLE_TOLERANCE = 3 * PIKA_STEP_SIZE;
 
 /**********************WEBCAM WINDOW**********************/
 void setup() 
@@ -24,11 +33,24 @@ void setup()
   cam.start();            
   //targetColor = color(0, 255, 63);
   targetColor = color(140, 40, 130);
+  
+  pikarunL = new PImage[2];
+  pikarunL[0] = loadImage("pikarunL1.png");
+  pikarunL[1] = loadImage("pikarunL2.png");
+  pikarunR = new PImage[2];
+  pikarunR[0] = loadImage("pikarunR1.png");
+  pikarunR[1] = loadImage("pikarunR2.png");
+  
+  pikaidle = new PImage[1];
+  pikaidle[0] = loadImage("pikaidle.png");
+  
+  pikaState = PikaState.IDLE;
+  pikaX = width/2;
+  pikaY = height/2;
 }
 
 void draw()
 { 
-  background(0, 0, 255);
   if (cam.available())
     cam.read();
 
@@ -39,34 +61,101 @@ void draw()
   else {
     manipulatedFrame = cam;
   }
-  manipulatedFrame = trackObject(manipulatedFrame, targetColor);
-  image(manipulatedFrame, 0, 0);
+
+  if (viewState.equals(ViewState.RAW_CAPTURE)) {
+    image(manipulatedFrame, 0, 0);
+    return;
+  }
   
-  frameCounter++;
-  if (frameCounter < FRAMES_PER_UPDATE && shapes.size() > 0) {
+  PImage binaryFrame = trackObject(manipulatedFrame, targetColor); 
+  if (viewState.equals(ViewState.BINARIZED)) {
+    image(binaryFrame, 0, 0);
+  }
+  else {
+    image(manipulatedFrame, 0, 0);
+  }
+  
+  int x = 0, y = 0;
+  if (shapes.size() > 0) {
     Collections.sort(shapes);
     Shape biggestShape = shapes.get(0);
     biggestShape.shapeColor = color(255, 0, 0);
-    int x = (biggestShape.minX + biggestShape.maxX)/2;
-    int y = (biggestShape.minY + biggestShape.maxY)/2;
-    stroke(0, 0, 255);
-    rect(x-2, y-2, 3, 3);
+    x = (biggestShape.minX + biggestShape.maxX)/2;
+    y = (biggestShape.minY + biggestShape.maxY)/2;
+    if (viewState.equals(ViewState.BINARIZED)) {
+      stroke(0, 0, 255);
+      rect(x-2, y-2, 3, 3);
+    }
   }
+  if (viewState.equals(ViewState.BINARIZED))
+    return;
+  
+  boolean moving = false;
+  // take a step towards the center of the object
+  if (x < pikaX - PIKA_IDLE_TOLERANCE) {
+    // move left
+    moving = true;
+    changePikaState(PikaState.MOVING_LEFT);
+    pikaX -= PIKA_STEP_SIZE;
+  }
+  else if (x > pikaX + PIKA_IDLE_TOLERANCE) {
+    moving = true;
+    changePikaState(PikaState.MOVING_RIGHT);
+    pikaX += PIKA_STEP_SIZE;
+  }
+  if (y < pikaY - PIKA_IDLE_TOLERANCE) {
+    moving = true;
+    if (pikaState.equals(PikaState.IDLE))
+      changePikaState(PikaState.MOVING_LEFT);
+    pikaY -= PIKA_STEP_SIZE;
+  }
+  else if (y > pikaY + PIKA_IDLE_TOLERANCE) {
+    moving = true;
+    if (pikaState.equals(PikaState.IDLE))
+      changePikaState(PikaState.MOVING_RIGHT);
+    pikaY += PIKA_STEP_SIZE;
+  }
+  if (!moving)
+    changePikaState(PikaState.IDLE);
+  image(getPikaImage(), pikaX, pikaY);
+  pikaframe = (pikaframe + 1) % getCurrentPikaAnimLength();
+}
 
-  if (s.mousePressed)
-  { 
-    handleSecondaryWindowMousePress();
+void changePikaState(PikaState newState) {
+  if (pikaState.equals(newState)) {
+    return;
+  }
+  else {
+    pikaState = newState;
+    pikaframe = 0;
+  }
+}
+
+PImage getPikaImage() {
+  switch (pikaState) {
+    case IDLE: return pikaidle[pikaframe];
+    case MOVING_LEFT: return pikarunL[pikaframe];
+    case MOVING_RIGHT: return pikarunR[pikaframe];
+    default: return null;
+  }
+}
+int getCurrentPikaAnimLength() {
+  switch (pikaState) {
+    case IDLE: return pikaidle.length;
+    case MOVING_LEFT: return pikarunL.length;
+    case MOVING_RIGHT: return pikarunR.length;
+    default: return 1;
   }
 }
 
 void saveScreenshot()
 {
   saveFrame("screenshots/image####.png");
+  println("Saved a screenshot.");
 }
 
 PImage trackObject(PImage img, color c)
 {
-  // TODO unstub
   PImage newImg = binarize(img);
   grassFire(newImg);
   return newImg;
@@ -97,34 +186,10 @@ float euclideanDistance(color c1, color c2) {
 }
 
 void mouseReleased() {
-  color ci = cam.get(mouseX, mouseY);
-  color cf = manipulatedFrame.get(mouseX, mouseY);
-  /*println(red(ci), green(ci), blue(ci), "--", euclideanDistance(ci, targetColor));*/
+  color ci = manipulatedFrame.get(mouseX, mouseY);
+  //color cf = manipulatedFrame.get(mouseX, mouseY);
+  //println(red(ci), green(ci), blue(ci), "--", euclideanDistance(ci, targetColor));
   targetColor = ci;
-}
-
-void handleSecondaryWindowMousePress()
-{
-  if (s.mouseX > 40 && s.mouseX < 340 && s.mouseY > 54 && s.mouseY < 102) 
-  {
-    println("Matthew");
-  }
-  else if (s.mouseX > 40 && s.mouseX < 340 && s.mouseY > 132 && s.mouseY < 180) 
-  {
-    println("Kyle");
-  }
-  else if (s.mouseX > 40 && s.mouseX < 340 && s.mouseY > 210 && s.mouseY < 258) 
-  {
-    println("Brittany");
-  }
-  else if (s.mouseX > 40 && s.mouseX < 340 && s.mouseY > 287 && s.mouseY < 337) 
-  {
-    saveScreenshot();
-  } 
-  else if (s.mouseX > 40 && s.mouseX < 340 && s.mouseY > 366 && s.mouseY < 415) 
-  {
-    bright_up += 0.5;
-  }
 }
 
 PImage brightness_change(Capture vid)
@@ -137,18 +202,20 @@ PImage brightness_change(Capture vid)
     float r = red(c)*bright_up;
     float g = green(c)*bright_up;
     float b = blue(c)*bright_up;
-    if (r > 255)
-      r = 255;
-    if (g > 255)
-      g = 255;
-    if (b > 255)
-      b = 255;
+    r = clamp(r, 0, 255);
+    g = clamp(g, 0, 255);
+    b = clamp(b, 0, 255);
     target.pixels[i] = color(r, g, b);
   }
   return target;
 }
 
+float clamp(float val, float min, float max) {
+  return max(min, min(max, val));
+}
+
 void grassFire(PImage img) {
+  shapes = new ArrayList<Shape>();
   for (int y = 0; y < img.height; y += STEP_SIZE)
   {
     for (int x = 0; x < img.width; x += STEP_SIZE)
@@ -191,7 +258,8 @@ void grassFire(PImage img) {
 
 
         label(img, x, y, SC, shapeNum);
-        //println(shapes.get(shapeNum).minX, shapes.get(shapeNum).maxX, shapes.get(shapeNum).minY, shapes.get(shapeNum).maxY);
+        //println(shapes.get(shapeNum).minX, shapes.get(shapeNum).maxX,
+        //  shapes.get(shapeNum).minY, shapes.get(shapeNum).maxY);
         //System.exit(0);
       }
     }
@@ -234,6 +302,18 @@ void keyPressed() {
     shapes.get(0).shapeColor = color(255, 0, 0);
     println(shapes);
   }
+  else if (key == 'p') {
+    pikaX = width/2;
+    pikaY = height/2;
+  }
+  else if (key == 'o') {
+    println("Pikachu:", pikaX, pikaY, pikaState.name());
+    Collections.sort(shapes);
+    Shape biggestShape = shapes.get(0);
+    int x = (biggestShape.minX + biggestShape.maxX)/2;
+    int y = (biggestShape.minY + biggestShape.maxY)/2;
+    println("Center:", x, y);
+  }
 }
 
 /**********************CONTROL PANEL WINDOW**********************/
@@ -253,7 +333,9 @@ public class PFrame extends Frame
 public class secondApplet extends PApplet
 {
   String[] members = {
-    "Matthew", "Kyle", "Brittany", "Save Screenshot", "Increase Brightness"
+    "View Raw Webcam Capture", "View Binarized Video", 
+    "View Manipulated Video", "Save Screenshot", 
+    "Darken              Brighten"
   };
 
   public void setup()
@@ -262,23 +344,57 @@ public class secondApplet extends PApplet
 
   public void draw() 
   {
-    background(255, 0, 0);  
+    background(60, 172, 222);  
     rectMode(CENTER);
     textAlign(CENTER, CENTER);
     textSize(16);
     int btnY = 78;
     for (int i=0; i<5; i++)
     {
-      fill(255);
+      // highlight selected button
+      if (i == viewState.ordinal()) {
+        fill(131, 217, 255);
+      }
+      else {
+        fill(255);
+      }
       rect(width/2, btnY, 300, 50);
       fill(0);
       text(members[i], width/2, btnY); 
       btnY += 78;
     }
+    // show current target color
+    text("Target Color:", 313, 5);
+    fill(targetColor);
+    rect(width-8, 8, 16, 16);
   }
 
   void mousePressed()
   {
+    if (s.mouseX > 40 && s.mouseX < 340 && s.mouseY > 54 && s.mouseY < 102) 
+    {
+      viewState = ViewState.RAW_CAPTURE;
+    }
+    else if (s.mouseX > 40 && s.mouseX < 340 && s.mouseY > 132 && s.mouseY < 180) 
+    {
+      viewState = ViewState.BINARIZED;
+    }
+    else if (s.mouseX > 40 && s.mouseX < 340 && s.mouseY > 210 && s.mouseY < 258) 
+    {
+      viewState = ViewState.MANIPULATED;
+    }
+    else if (s.mouseX > 40 && s.mouseX < 340 && s.mouseY > 287 && s.mouseY < 337) 
+    {
+      saveScreenshot();
+    } 
+    else if (s.mouseX > 40 && s.mouseX < 190 && s.mouseY > 366 && s.mouseY < 415) 
+    {
+      bright_up -= 0.1;
+    } 
+    else if (s.mouseX > 190 && s.mouseX < 340 && s.mouseY > 366 && s.mouseY < 415) 
+    {
+      bright_up += 0.1;
+    }
   }
 }
 
@@ -307,11 +423,11 @@ class Shape implements Comparable<Shape> {
     s.append(hex(shapeColor).substring(2) + "]");
     return s.toString();
   }
-  
+
   public Integer getSize() {
     return (maxX-minX) * (maxY-minY);
   }
-  
+
   public int compareTo(Shape other) {
     // This is intentionally reversed to make the largest shape
     // sort to the front of the list.
