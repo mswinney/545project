@@ -1,27 +1,41 @@
 import processing.video.*;
 import java.awt.Frame;
 import java.util.Collections;
+import ddf.minim.*;
+
+// webcam capture
 Capture cam;
 PFrame f;
 secondApplet s;
+// brightness
 static final float STARTING_BRIGHTNESS = 1;
 float bright_up = STARTING_BRIGHTNESS;
+// color matching
 static final float COLOR_MATCH_THRESHOLD = 65;
 static final int STEP_SIZE = 8;
 PImage manipulatedFrame;
 color targetColor;
 ArrayList<Shape> shapes = new ArrayList<Shape>();
 ViewState viewState = ViewState.RAW_CAPTURE;
+// pikachu
 PImage[] pikarunL;
 PImage[] pikarunR;
 PImage[] pikaidle;
 int pikaX, pikaY, pikaframe = 0;
 PikaState pikaState = PikaState.IDLE;
 // how many pixels pikachu moves each step
-int PIKA_STEP_SIZE = 8;
+int PIKA_STEP_SIZE = 4;
 // how far pikachu can be from the center of the object
 // and still go into idle anim (should be at least one step)
 int PIKA_IDLE_TOLERANCE = 3 * PIKA_STEP_SIZE;
+ArrayList<PokeBall> balls = new ArrayList<PokeBall>();
+PImage ballImg;
+int score = 0;
+// how far pikachu has to be from a ball in order to collect it
+int PIKA_BALL_COLLECT_TOLERANCE = 8;
+// sound
+Minim minim;
+AudioPlayer pikaVoice;
 
 /**********************WEBCAM WINDOW**********************/
 void setup() 
@@ -51,6 +65,11 @@ void setup()
   pikaState = PikaState.IDLE;
   pikaX = width/2;
   pikaY = height/2;
+  
+  ballImg = loadImage("pokeball.png");
+  
+  minim = new Minim(this);
+  pikaVoice = minim.loadFile("pikachu.wav");
 }
 
 void draw()
@@ -123,6 +142,23 @@ void draw()
     changePikaState(PikaState.IDLE);
   image(getPikaImage(), pikaX, pikaY);
   pikaframe = (pikaframe + 1) % getCurrentPikaAnimLength();
+  
+  for (int i = 0; i < balls.size(); i++) {
+    PokeBall b = balls.get(i);
+    int pikaDistX = abs(pikaX - b.x);
+    int pikaDistY = abs(pikaY - b.y);
+    if (pikaDistX < PIKA_BALL_COLLECT_TOLERANCE &&
+        pikaDistY < PIKA_BALL_COLLECT_TOLERANCE) {
+      balls.remove(b);
+      i--;
+      score++;
+      pikaVoice.play();
+      pikaVoice.rewind();
+    }
+    else {
+      image(ballImg, b.x, b.y);
+    }
+  }
 }
 
 void changePikaState(PikaState newState) {
@@ -318,6 +354,9 @@ void keyPressed() {
     int y = (biggestShape.minY + biggestShape.maxY)/2;
     println("Center:", x, y);
   }
+  else if (key == 'b') {
+    balls.add(new PokeBall());
+  }
 }
 
 /**********************CONTROL PANEL WINDOW**********************/
@@ -368,9 +407,15 @@ public class secondApplet extends PApplet
       btnY += 78;
     }
     // show current target color
-    text("Target Color:", 313, 5);
+    text("Target Color:", 313, 6);
     fill(targetColor);
     rect(width-8, 8, 16, 16);
+    
+    if (score > 0) {
+      fill(0);
+      text("Score:", 25, 6);
+      text(score, 58, 6);
+    }
   }
 
   void mousePressed()
@@ -439,3 +484,11 @@ class Shape implements Comparable<Shape> {
   }
 }
 
+class PokeBall {
+  int x;
+  int y;
+  public PokeBall() {
+    x = floor(random(0, width+1));
+    y = floor(random(0, height+1));
+  }
+}
