@@ -140,13 +140,14 @@ void draw()
   }
   if (!moving)
     changePikaState(PikaState.IDLE);
-  image(getPikaImage(), pikaX, pikaY);
+  PImage pikaImage = getPikaImage();
+  image(pikaImage, pikaX, pikaY);
   pikaframe = (pikaframe + 1) % getCurrentPikaAnimLength();
   
   for (int i = 0; i < balls.size(); i++) {
     PokeBall b = balls.get(i);
-    int pikaDistX = abs(pikaX - b.x);
-    int pikaDistY = abs(pikaY - b.y);
+    int pikaDistX = abs(pikaX + pikaImage.width/2 - (b.x + ballImg.width/2));
+    int pikaDistY = abs(pikaY + pikaImage.height/2 - (b.y + ballImg.height/2));
     if (pikaDistX < PIKA_BALL_COLLECT_TOLERANCE &&
         pikaDistY < PIKA_BALL_COLLECT_TOLERANCE) {
       balls.remove(b);
